@@ -3,6 +3,6 @@ pandas>=2.0.0
 numpy>=1.24.0
 matplotlib
 # For production RAG integration (optional)
-# pinecone-client>=3.0.0
-# anthropic>=0.18.0
-# sentence-transformers>=2.2.0
+pinecone-client>=3.0.0
+anthropic>=0.18.0
+sentence-transformers>=2.2.0
