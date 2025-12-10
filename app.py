@@ -1,15 +1,16 @@
 """
-Health Data Science-as-a-Service (HDSaaS)
+BHF Data Science Centre - Health Data Service
 A comprehensive platform for research groups working with large-scale health datasets.
 """
 
 import streamlit as st
 from pathlib import Path
+import pandas as pd
 
 # Page configuration
 st.set_page_config(
-    page_title="Health Data Science-as-a-Service",
-    page_icon="🔬",
+    page_title="BHF Data Science Centre - Health Data Service",
+    page_icon="❤️",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -30,8 +31,8 @@ load_css()
 st.markdown("""
 <div class="hero-section">
     <div class="hero-content">
-        <div class="hero-badge">Healthcare Analytics Platform</div>
-        <h1 class="hero-title">Health Data Science<br><span class="hero-highlight">as a Service</span></h1>
+        <div class="hero-badge">BHF Data Science Centre</div>
+        <h1 class="hero-title">Health Data Service</h1>
         <p class="hero-subtitle">Transforming raw health records into research-ready datasets.<br>
         Built for academic and clinical research groups working with NHS data at scale.</p>
         <div class="hero-stats">
@@ -140,68 +141,43 @@ with tab1:
         """)
     
     with col_right:
-        st.markdown("#### Example Phenotype Logic")
+        st.markdown("#### Example Phenotype Definition")
         
         with st.expander("🫀 Acute Myocardial Infarction (AMI)", expanded=True):
-            st.code("""
-{
-  "phenotype": "acute_myocardial_infarction",
-  "version": "2.1.0",
-  "sources": ["hes_apc", "gdppr"],
-  "logic": {
-    "hes_apc": {
-      "field": "diag_4_01",
-      "codelist": "ami_icd10_v2",
-      "position": ["primary", "secondary"]
-    },
-    "gdppr": {
-      "field": "code", 
-      "codelist": "ami_snomed_v2",
-      "date_field": "date"
-    }
-  },
-  "codelists": {
-    "ami_icd10_v2": ["I21", "I21.0", "I21.1", "I21.2", 
-                     "I21.3", "I21.4", "I21.9", "I22"],
-    "ami_snomed_v2": ["57054005", "70422006", "73795002"]
-  }
-}
-            """, language="json")
+            st.markdown("""
+            **Phenotype ID:** `acute_myocardial_infarction`  
+            **Version:** 2.1.0
+            
+            **Data Sources:**
+            - HES APC (diagnosis fields)
+            - GDPPR (clinical events)
+            
+            **ICD-10 Codes:**
+            `I21`, `I21.0`, `I21.1`, `I21.2`, `I21.3`, `I21.4`, `I21.9`, `I22`
+            
+            **SNOMED CT Codes:**
+            `57054005`, `70422006`, `73795002`
+            
+            **Logic:** First occurrence of any matching code across sources, with date harmonisation and deduplication.
+            """)
         
-        with st.expander("💊 PySpark Implementation"):
-            st.code("""
-from pyspark.sql import functions as F
-
-def identify_ami(hes_apc_df, gdppr_df, codelists):
-    \"\"\"Identify AMI events across HES APC and GDPPR.\"\"\"
-    
-    # HES APC: Check diagnosis codes
-    hes_ami = (
-        hes_apc_df
-        .filter(
-            F.col("diag_4_01").rlike("|".join(codelists["ami_icd10_v2"]))
-        )
-        .select("nhs_number", "epistart", F.lit("hes_apc").alias("source"))
-        .withColumnRenamed("epistart", "event_date")
-    )
-    
-    # GDPPR: Check SNOMED codes
-    gdppr_ami = (
-        gdppr_df
-        .filter(F.col("code").isin(codelists["ami_snomed_v2"]))
-        .select("nhs_number", "date", F.lit("gdppr").alias("source"))
-        .withColumnRenamed("date", "event_date")
-    )
-    
-    # Combine and deduplicate
-    ami_events = (
-        hes_ami.union(gdppr_ami)
-        .groupBy("nhs_number")
-        .agg(F.min("event_date").alias("first_ami_date"))
-    )
-    
-    return ami_events
-            """, language="python")
+        with st.expander("🧠 Stroke"):
+            st.markdown("""
+            **Phenotype ID:** `stroke_any`  
+            **Version:** 1.3.0
+            
+            **Data Sources:**
+            - HES APC (primary and secondary diagnosis)
+            - GDPPR (clinical events)
+            - Stroke Registry
+            
+            **ICD-10 Codes:**
+            `I60`, `I61`, `I62`, `I63`, `I64` (Haemorrhagic and Ischaemic)
+            
+            **Sub-phenotypes available:**
+            - `stroke_ischaemic` (I63 only)
+            - `stroke_haemorrhagic` (I60-I62)
+            """)
 
 # ----------------------------------------------------------------------------
 # TAB 2: Partial Curation
@@ -260,22 +236,8 @@ with tab2:
         """)
     
     st.markdown("#### Pipeline Architecture")
-    st.markdown("""
-    ```mermaid
-    flowchart LR
-        A[Raw GDPPR] --> B[Cleaning]
-        C[Raw HES] --> B
-        D[Registries] --> B
-        B --> E[Harmonisation]
-        E --> F[Long Format]
-        E --> G[Wide Format]
-        F --> H[Delta Lake]
-        G --> H
-        H --> I[Documentation]
-    ```
-    """)
     
-    # Visual pipeline
+    # Visual pipeline using HTML/CSS (not Mermaid)
     st.markdown("""
     <div class="pipeline-visual">
         <div class="pipeline-stage stage-1">
@@ -300,6 +262,48 @@ with tab2:
             <div class="stage-icon">📦</div>
             <div class="stage-name">Output</div>
             <div class="stage-detail">Delta Lake tables</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Detailed pipeline diagram
+    st.markdown("#### Detailed Data Flow")
+    
+    st.markdown("""
+    <div class="detailed-pipeline">
+        <div class="pipeline-row">
+            <div class="source-group">
+                <div class="source-label">Sources</div>
+                <div class="source-items">
+                    <span class="source-chip">Raw GDPPR</span>
+                    <span class="source-chip">Raw HES</span>
+                    <span class="source-chip">Registries</span>
+                </div>
+            </div>
+            <div class="pipeline-arrow-large">⟶</div>
+            <div class="process-group">
+                <div class="process-label">Processing</div>
+                <div class="process-items">
+                    <span class="process-chip">Cleaning</span>
+                    <span class="process-chip">Harmonisation</span>
+                </div>
+            </div>
+            <div class="pipeline-arrow-large">⟶</div>
+            <div class="output-group">
+                <div class="output-label">Outputs</div>
+                <div class="output-items">
+                    <span class="output-chip">Long Format</span>
+                    <span class="output-chip">Wide Format</span>
+                </div>
+            </div>
+            <div class="pipeline-arrow-large">⟶</div>
+            <div class="final-group">
+                <div class="final-label">Storage</div>
+                <div class="final-items">
+                    <span class="final-chip">Delta Lake</span>
+                    <span class="final-chip">Documentation</span>
+                </div>
+            </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -361,125 +365,46 @@ with tab3:
     </div>
     """, unsafe_allow_html=True)
     
-    with st.expander("📐 Example: Time-Varying Covariate Derivation"):
-        st.code("""
-from pyspark.sql import functions as F
-from pyspark.sql.window import Window
-
-def derive_time_varying_egfr(lab_df, cohort_df, windows=[30, 90, 365]):
-    \"\"\"
-    Derive time-varying eGFR features with multiple look-back windows.
+    with st.expander("📐 Time-Varying Covariate Methodology"):
+        st.markdown("""
+        **Approach:** We derive time-varying covariates using configurable look-back windows.
+        
+        **Example: eGFR Features**
+        
+        For each patient, we calculate:
+        - Latest eGFR value within 30, 90, and 365 days before index date
+        - Mean eGFR across each window
+        - Minimum eGFR (for detecting acute kidney injury)
+        - Count of measurements (data density indicator)
+        
+        **Windows Available:**
+        - Short-term: 30, 60, 90 days
+        - Medium-term: 180, 365 days
+        - Long-term: 2, 3, 5 years
+        
+        All derivations are documented with full methodology and validation checks.
+        """)
     
-    Parameters:
-    -----------
-    lab_df : DataFrame
-        Lab results with columns [nhs_number, date, test_code, value]
-    cohort_df : DataFrame
-        Cohort with columns [nhs_number, index_date]
-    windows : list
-        Look-back windows in days
-    
-    Returns:
-    --------
-    DataFrame with eGFR features for each window
-    \"\"\"
-    
-    # Filter to eGFR tests
-    egfr_labs = lab_df.filter(
-        F.col("test_code").isin(["GFR", "EGFR", "44Z3."])
-    )
-    
-    # Join with cohort
-    joined = cohort_df.join(egfr_labs, "nhs_number")
-    
-    # Calculate days before index
-    joined = joined.withColumn(
-        "days_before_index",
-        F.datediff("index_date", "date")
-    )
-    
-    # Derive features for each window
-    features = cohort_df.select("nhs_number", "index_date")
-    
-    for window in windows:
-        window_df = (
-            joined
-            .filter(
-                (F.col("days_before_index") >= 0) & 
-                (F.col("days_before_index") <= window)
-            )
-            .groupBy("nhs_number")
-            .agg(
-                F.last("value").alias(f"egfr_latest_{window}d"),
-                F.mean("value").alias(f"egfr_mean_{window}d"),
-                F.min("value").alias(f"egfr_min_{window}d"),
-                F.count("value").alias(f"egfr_count_{window}d")
-            )
-        )
-        features = features.join(window_df, "nhs_number", "left")
-    
-    return features
-        """, language="python")
-    
-    with st.expander("📊 Example: MACE Outcome Derivation"):
-        st.code("""
-def derive_mace_outcomes(cohort_df, hes_df, mortality_df, follow_up_days=365):
-    \"\"\"
-    Derive Major Adverse Cardiovascular Events (MACE) composite outcome.
-    
-    MACE = MI + Stroke + CV Death
-    \"\"\"
-    
-    # MI events from HES
-    mi_codes = ["I21", "I22", "I23", "I24", "I25"]
-    mi_events = (
-        hes_df
-        .filter(F.col("diag_4_01").rlike("|".join(mi_codes)))
-        .select("nhs_number", F.col("epistart").alias("mi_date"))
-    )
-    
-    # Stroke events from HES
-    stroke_codes = ["I60", "I61", "I62", "I63", "I64"]
-    stroke_events = (
-        hes_df
-        .filter(F.col("diag_4_01").rlike("|".join(stroke_codes)))
-        .select("nhs_number", F.col("epistart").alias("stroke_date"))
-    )
-    
-    # CV death from mortality
-    cv_death_codes = ["I"]  # ICD-10 Chapter I
-    cv_death = (
-        mortality_df
-        .filter(F.col("underlying_cause").startswith("I"))
-        .select("nhs_number", F.col("death_date").alias("cv_death_date"))
-    )
-    
-    # Combine with cohort
-    outcomes = (
-        cohort_df
-        .join(mi_events, "nhs_number", "left")
-        .join(stroke_events, "nhs_number", "left")
-        .join(cv_death, "nhs_number", "left")
-    )
-    
-    # Calculate time to first MACE
-    outcomes = outcomes.withColumn(
-        "mace_date",
-        F.least("mi_date", "stroke_date", "cv_death_date")
-    ).withColumn(
-        "time_to_mace",
-        F.datediff("mace_date", "index_date")
-    ).withColumn(
-        "mace_event",
-        F.when(
-            (F.col("time_to_mace").isNotNull()) & 
-            (F.col("time_to_mace") <= follow_up_days),
-            1
-        ).otherwise(0)
-    )
-    
-    return outcomes
-        """, language="python")
+    with st.expander("📊 MACE Outcome Methodology"):
+        st.markdown("""
+        **Definition:** Major Adverse Cardiovascular Events (MACE) is a composite outcome.
+        
+        **Components:**
+        1. **Myocardial Infarction** — ICD-10 codes I21-I24 from HES APC
+        2. **Stroke** — ICD-10 codes I60-I64 from HES APC
+        3. **Cardiovascular Death** — ICD-10 Chapter I as underlying cause from ONS mortality
+        
+        **Derivation:**
+        - Time to first MACE calculated from index date
+        - Censoring at end of follow-up or non-CV death
+        - Component-specific outcomes available separately
+        
+        **Output Fields:**
+        - `mace_event` (binary)
+        - `time_to_mace` (days)
+        - `mace_type` (MI/Stroke/CV Death)
+        - `mace_date`
+        """)
 
 # ----------------------------------------------------------------------------
 # TAB 4: Data Quality
@@ -521,8 +446,6 @@ with tab4:
         st.markdown("#### Example Quality Metrics")
         
         # Simulated quality metrics
-        import pandas as pd
-        
         quality_data = pd.DataFrame({
             "Table": ["gdppr_clean", "hes_apc_clean", "mortality", "cohort_final"],
             "Completeness": [98.2, 99.1, 99.8, 97.5],
@@ -546,66 +469,17 @@ with tab4:
         
         st.bar_chart(completeness_data.set_index("Field"), height=200)
     
-    with st.expander("🔍 Quality Check Implementation"):
-        st.code("""
-from dataclasses import dataclass
-from typing import Dict, List
-import pyspark.sql.functions as F
-
-@dataclass
-class QualityReport:
-    table_name: str
-    row_count: int
-    completeness: Dict[str, float]
-    validity: Dict[str, float]
-    duplicates: int
-    date_issues: List[str]
-    
-def run_quality_checks(df, table_name: str, config: dict) -> QualityReport:
-    \"\"\"Run comprehensive quality checks on a DataFrame.\"\"\"
-    
-    row_count = df.count()
-    
-    # Completeness checks
-    completeness = {}
-    for col in df.columns:
-        non_null = df.filter(F.col(col).isNotNull()).count()
-        completeness[col] = round(non_null / row_count * 100, 2)
-    
-    # Validity checks
-    validity = {}
-    for col, valid_range in config.get("valid_ranges", {}).items():
-        if col in df.columns:
-            valid_count = df.filter(
-                (F.col(col) >= valid_range[0]) & 
-                (F.col(col) <= valid_range[1])
-            ).count()
-            validity[col] = round(valid_count / row_count * 100, 2)
-    
-    # Duplicate check
-    pk_cols = config.get("primary_key", [])
-    if pk_cols:
-        duplicates = row_count - df.dropDuplicates(pk_cols).count()
-    else:
-        duplicates = 0
-    
-    # Date plausibility
-    date_issues = []
-    for date_col in config.get("date_columns", []):
-        if date_col in df.columns:
-            future_dates = df.filter(F.col(date_col) > F.current_date()).count()
-            if future_dates > 0:
-                date_issues.append(f"{date_col}: {future_dates} future dates")
-    
-    return QualityReport(
-        table_name=table_name,
-        row_count=row_count,
-        completeness=completeness,
-        validity=validity,
-        duplicates=duplicates,
-        date_issues=date_issues
-    )
-        """, language="python")
+    # Link to dashboard
+    st.markdown("---")
+    st.markdown("""
+    <div class="dashboard-link">
+        <h4>📊 Data Summary Dashboard</h4>
+        <p>For comprehensive summary statistics across our curated datasets, visit the BHF Data Science Centre Dashboard:</p>
+        <a href="https://bhfdatasciencecentre.org/dashboard/" target="_blank" class="dashboard-button">
+            View Data Dashboard →
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
 
 # ----------------------------------------------------------------------------
 # TAB 5: Technical Stack
@@ -909,20 +783,20 @@ for q, a in faqs:
 st.markdown("<div class='section-divider'></div>", unsafe_allow_html=True)
 
 # ============================================================================
-# RAG Q&A SECTION
+# RAG Q&A SECTION - Using ccurag
 # ============================================================================
 
 st.markdown("""
 <div class="section-header">
     <h2>💬 Ask a Question</h2>
-    <p>Powered by RAG (Retrieval Augmented Generation) with Pinecone + Claude</p>
+    <p>Powered by <a href="https://github.com/zwelshman/ccurag/tree/claude/rag-app-017frFm55631qUUGSQqqZXFJ" target="_blank">ccurag</a> — Hybrid BM25 + Semantic Search with Claude</p>
 </div>
 """, unsafe_allow_html=True)
 
 st.markdown("""
 <div class="qa-intro">
     <p>Ask questions about our services, phenotype definitions, curation processes, or technical capabilities. 
-    Our AI assistant retrieves relevant documentation and provides accurate answers.</p>
+    Our AI assistant uses hybrid search (BM25 keyword matching + vector semantic search) to retrieve relevant documentation and provide accurate answers.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -953,11 +827,11 @@ if user_question:
     with st.chat_message("user"):
         st.markdown(user_question)
     
-    # Generate response (placeholder - would connect to actual RAG system)
+    # Generate response (placeholder - would connect to actual ccurag system)
     with st.chat_message("assistant"):
         with st.spinner("Searching knowledge base..."):
             # Simulated RAG response
-            # In production, this would call Pinecone for retrieval and Claude for generation
+            # In production, this would call the ccurag hybrid retriever and Claude
             
             response_map = {
                 "phenotype": """Based on our documentation, **phenotypes** are clinical definitions that identify patient populations or conditions using standardised clinical codes. 
@@ -967,7 +841,7 @@ Our phenotype development service includes:
 - **Version-controlled specifications** with full audit trails
 - **Multi-source compatibility** across GDPPR, HES, and disease registries
 
-Each phenotype is delivered as a structured JSON specification with accompanying PySpark implementation code.""",
+Each phenotype is delivered as a structured JSON specification with full methodology documentation.""",
 
                 "quality": """Our **Data Quality & Assurance** service provides comprehensive automated checks across six dimensions:
 
@@ -978,7 +852,9 @@ Each phenotype is delivered as a structured JSON specification with accompanying
 5. **Uniqueness** - Primary key validation
 6. **Accuracy** - Distribution analysis and outlier detection
 
-Reports are delivered in PDF, HTML, and Markdown formats with interactive visualisations.""",
+Reports are delivered in PDF, HTML, and Markdown formats with interactive visualisations.
+
+For comprehensive summary statistics, visit the [Data Summary Dashboard](https://bhfdatasciencecentre.org/dashboard/).""",
 
                 "default": """I can help you with questions about:
 - **Phenotype development** - Clinical definitions and codelists
@@ -1015,23 +891,26 @@ What would you like to know more about?"""
             })
 
 # RAG configuration note
-with st.expander("⚙️ RAG Configuration"):
+with st.expander("⚙️ About the Q&A System"):
     st.markdown("""
-    **Current Setup (Demo Mode)**
-    - Keyword-based retrieval with simulated responses
+    **Powered by [ccurag](https://github.com/zwelshman/ccurag/tree/claude/rag-app-017frFm55631qUUGSQqqZXFJ)**
     
-    **Production Configuration**
-    - Vector database: Pinecone
-    - Embedding model: text-embedding-3-small
-    - Generation model: Claude 3.5 Sonnet
-    - Retrieval: Hybrid BM25 + semantic search
+    This Q&A system uses a hybrid Retrieval-Augmented Generation (RAG) approach:
     
-    To enable production RAG, configure the following environment variables:
-    ```
-    PINECONE_API_KEY=your_key
-    PINECONE_INDEX=hdss-knowledge
-    ANTHROPIC_API_KEY=your_key
-    ```
+    **Search Method:**
+    - **BM25 Keyword Search** — Excellent for exact term matching (function names, clinical codes, identifiers)
+    - **Vector Semantic Search** — Understands meaning and context for conceptual queries
+    - **Adaptive Weighting** — Automatically adjusts based on query type
+    
+    **Technology Stack:**
+    - Vector Database: Pinecone
+    - Embeddings: BAAI/llm-embedder
+    - Generation: Anthropic Claude
+    - Hybrid Search: BM25 + Vector with score fusion
+    
+    **Query Flow:**
+    
+    Question → Hybrid Search (BM25 + Vector) → Top Documents → Claude → Answer + Sources
     """)
 
 # ============================================================================
@@ -1042,12 +921,14 @@ st.markdown("""
 <div class="footer">
     <div class="footer-content">
         <div class="footer-section">
-            <h4>Health Data Science-as-a-Service</h4>
-            <p>Transforming raw health records into research-ready datasets.</p>
+            <h4>BHF Data Science Centre</h4>
+            <p>Health Data Service — Transforming raw health records into research-ready datasets.</p>
         </div>
         <div class="footer-section">
-            <h4>Contact</h4>
-            <p>For enquiries about our services, please get in touch.</p>
+            <h4>Resources</h4>
+            <p><a href="https://bhfdatasciencecentre.org/dashboard/" target="_blank">Data Summary Dashboard</a></p>
+            <p><a href="https://bhfdsc.github.io/documentation/" target="_blank">Health Data Science Resources</a></p>
+            <p><a href="https://github.com/BHFDSC" target="_blank">GitHub Organisation</a></p>
         </div>
         <div class="footer-section">
             <h4>Built With</h4>
@@ -1055,7 +936,7 @@ st.markdown("""
         </div>
     </div>
     <div class="footer-bottom">
-        <p>© 2025 Health Data Science-as-a-Service</p>
+        <p>© 2025 BHF Data Science Centre | <a href="https://bhfdatasciencecentre.org" target="_blank">bhfdatasciencecentre.org</a></p>
     </div>
 </div>
 """, unsafe_allow_html=True)
